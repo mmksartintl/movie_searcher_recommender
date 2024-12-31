@@ -3,8 +3,8 @@ Provides a synopsis about movie requested and recommends a playlist of other mov
 
 Implements:
 - ALS trained model in Spark for recommendations
-- LangChain to prompt LLM via Groq
-- Flask in Python to user interface
+- LangChain to prompt LLM via Groq https://python.langchain.com/docs/integrations/chat/groq/
+- Flask in Python to user interface https://flask.palletsprojects.com/en/stable/
 
 Steps:
 
