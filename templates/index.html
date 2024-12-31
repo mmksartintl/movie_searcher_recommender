@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+{% extends 'base.html' %}
+{% block content %}
+    <h1>{% block title %} Welcome to FlaskBlog {% endblock %}</h1>
+        <a href="create">
+            <h2>Send your question/post</h2>
+        </a>
+        <a>
+          <pre>Click above to send you question/post</pre>
+        </a>
+        <hr>
+
+    {% for post in posts %}
+        <a href="create">
+            <h2>{{ post['title'] }}</h2>
+        </a>
+	<a>
+          <pre>{{ post['content'] }}</pre>
+        </a>
+        <span class="badge badge-primary">{{ post['created'] }}</span>
+        <hr>
+    {% endfor %}
+
+    <h3>Viewers also watched</h3>
+
+    {% for movie in movies %}
+        <a>
+          <h5>{{ movie['title'] }}</h5>
+        </a>
+    {% endfor %}
+
+    {% if not movies %}
+        <a>
+          <h5>There is no movie other users watched</h5>
+        </a>
+    {% endif %}
+{% endblock %}
+<!--
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FlaskBlog</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename= 'css/style.css') }}">
+</head>
+<body>
+   <h1>Welcome to FlaskBlog</h1>
+</body>
+</html>
+--!>

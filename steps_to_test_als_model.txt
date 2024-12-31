@@ -1,0 +1,75 @@
+
+
+pip install pyspark numpy
+
+
+rate = spark.read.option("inferSchema","true").option("sep","\t").csv("/imdb/u.data").toDF("user","item","rating","timestamp")
+
+rate.printSchema()
+
+from pyspark.sql.functions import *
+from pyspark.sql.types import *
+
+rate = rate.withColumn("rating",col("rating").cast(DoubleType()))
+
+from pyspark.ml.recommendation import ALS
+
+als = ALS().setUserCol("user").setItemCol("item").setRatingCol("rating")
+
+als.setRank(5).setMaxIter(20)
+alsmodel = als.fit(rate)
+
+user_recs = alsmodel.recommendForAllUsers(3)
+
+
+item = spark.read.option("inferSchema","true").option("sep","|").csv("/imdb/u.item").toDF("id","title","rel_date","dum1","link","cat1","cat2","cat3","cat4","cat5","cat6","cat7","cat8","cat9","cat10","cat11","cat12","cat13","cat14","cat15","cat16","cat17","cat18","cat19")
+
+item.printSchema()
+
+alsmodel.itemFactors.show(truncate=False)
+
+import numpy as np
+def cos_sim(a,b):
+    return float(np.dot(a,b) / (np.linalg.norm(a) * np.linalg.norm(b)))
+	
+cossim = udf(cos_sim, DoubleType())
+
+moviesel_df = alsmodel.itemFactors.where("id = 10").select(col("features").alias("features_sel"))
+
+moviecross_df = moviesel_df.crossJoin(alsmodel.itemFactors)
+moviecross_df.printSchema()
+
+moviecs_df = moviecross_df.withColumn('cs',cossim("features_sel","features"))
+moviecs_df.printSchema()
+moviecs_df.show()
+
+moviecs_df.orderBy(desc("cs")).limit(10).show()
+
+alsmodel.write().save("/imdb/recomm_system")
+
+---------------
+
+from pyspark.ml.recommendation import ALSModel
+
+alsmodel = ALSModel.load("/imdb/recomm_system")
+
+from pyspark.sql.functions import *
+from pyspark.sql.types import *
+
+import numpy as np
+def cos_sim(a,b):
+    return float(np.dot(a,b) / (np.linalg.norm(a) * np.linalg.norm(b)))
+
+cossim = udf(cos_sim, DoubleType())
+
+moviesel_df = alsmodel.itemFactors.where("id = 50").select(col("features").alias("features_sel"))
+
+moviecross_df = moviesel_df.crossJoin(alsmodel.itemFactors)
+
+moviecs_df = moviecross_df.withColumn('cs',cossim("features_sel","features"))
+
+item = spark.read.option("inferSchema","true").option("sep","|").csv("/imdb/u.item").toDF("id","title","rel_date","dum1","link","cat1","cat2","cat3","cat4","cat5","cat6","cat7","cat8","cat9","cat10","cat11","cat12","cat13","cat14","cat15","cat16","cat17","cat18","cat19")
+
+
+
+moviecs_df.join(item, "id").select("cs","title").orderBy(desc("cs")).limit(10).show(truncate=False)
